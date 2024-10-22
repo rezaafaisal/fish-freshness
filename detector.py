@@ -2,33 +2,55 @@ from ultralytics import YOLO
 from supervision import Detections
 from PIL import Image, ImageDraw
 
+import os
+
 
 class Detector:
 
    def __init__(self):
-       self.model = YOLO("yolov8n.pt")
+       self.model = YOLO("models/yolo8.pt")
 
    def detect(self, image_path):
-      image = Image.open("/content/image1.jpg")
-      output = self.model(image)
-      results = Detections.from_ultralytics(output[0])
+      try:
+         image = Image.open(image_path)
+         output = self.model(image)
+         results = Detections.from_ultralytics(output[0])
+
+         self.crop(image, results)
+         self.draw(image, results)
+      except:
+         raise
+      
+   def crop(self, image, bounding_box, filename="cropped"):
+      try:
+         x_min, y_min, x_max, y_max, = bounding_box.xyxy[0]
+
+         img_cropped = image.crop((x_min, y_min, x_max, y_max))
+         img_cropped.save(f"images/{filename}.jpg")
+         pass
+
+      except:
+         raise
    
-   def draw(self, image_path):
+   def draw(self, image: Image, bounding_box, filename="drawn"):
       # draw box on image
-      draw = ImageDraw.Draw(image:)
 
-      # Loop through detected objects and draw bounding boxes
-      for det in results.xyxy[0]:
-         # det format: [x_min, y_min, x_max, y_max, confidence, class]
-         x_min, y_min, x_max, y_max, = results.xyxy[0]
+      try:
+         drawn = ImageDraw.Draw(image)
 
-         # Draw bounding box
-         draw.rectangle([x_min, y_min, x_max, y_max], outline="red", width=2)
+         # Loop through detected objects and draw bounding boxes
+         for det in bounding_box.xyxy[0]:
+            # det format: [x_min, y_min, x_max, y_max, confidence, class]
+            x_min, y_min, x_max, y_max, = bounding_box.xyxy[0]
 
-         # Annotate with class name and confidence
-         draw.text((x_min, y_min), text='test', fill="red")
+            # Draw bounding box
+            drawn.rectangle([x_min, y_min, x_max, y_max], outline="red", width=2)
 
-      # Display or save the image with bounding boxes
-      image.show()
+            # Annotate with class name and confidence
+            drawn.text((x_min, y_min), text='Mata Ikan', fill="red")
+         
+         image.save(f"images/{filename}.jpg")
+      except Exception as e:
+         raise e
 
        
